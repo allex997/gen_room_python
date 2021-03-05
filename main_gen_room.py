@@ -257,7 +257,7 @@ class Room:
         self.room , self.maps = room, maps
         self.freedoor, self.freedoorxy = maxwelldoor, doorxy
         
-    # связываем комнаты
+    # связываем комнаты # тут косяк
     def create_link_room(self,room):
         #room = cp.copy(room2)
         def find_nearest_door(room2):
@@ -395,7 +395,8 @@ class Room:
 
 
                                 nstr = number_cell(y2,x2,n,celli) #print(get_string_number_cell(nstr))
-                                get_string_number_cell(nstr)
+                                if type(nstr) == str:
+                                    get_string_number_cell(nstr)
                                 if not (nstr in cells_str):
                                     cells_str.append(nstr)
 
@@ -445,9 +446,10 @@ class Room:
             #global bpos,epos
             create_graph(0,5,(bpos[0],bpos[1]),maps)
             for cs in cells_str:
-                v,n,x,y = get_string_number_cell(cs)
-                
-                create_graph(v,n,(y,x),maps)#point
+                if type(cs) == str:
+                    v,n,x,y = get_string_number_cell(cs)
+                    
+                    create_graph(v,n,(y,x),maps)#point
             
             
             
@@ -478,8 +480,9 @@ class Room:
             for path in range(len(paths)):
                 rotates[path] = []
                 for point in paths[path][1:-1]:
-                    v,n,x,y = get_string_number_cell(point) # n - направление
-                    rotates[path].append(n)
+                    if type(point) == str:
+                        v,n,x,y = get_string_number_cell(point) # n - направление
+                        rotates[path].append(n)
                     #if n2 != n:
 
                     #    n2 = cp(n)
@@ -506,8 +509,9 @@ class Room:
             # получаем координаты в виде (y,x)
             for mp in range(len(minpaths)):
                 for cell in range(len(minpaths[mp])):
-                    v,n,x,y = get_string_number_cell(minpaths[mp][cell])
-                    minpaths[mp][cell] = (y,x)
+                    if type(minpaths[mp][cell]) == str:
+                        v,n,x,y = get_string_number_cell(minpaths[mp][cell])
+                        minpaths[mp][cell] = (y,x)
             
             return minpaths # y,x
             #return 
@@ -519,13 +523,6 @@ class Room:
         
         #print_color_map(maps,'xx')
         return min_rotate(g.paths) # y,x
-        # создание тунеля
-        def create_tunel(self):
-            #freedoorxy links linksdoor
-            def one_door():
-                pass
-
-            pass
 
     #создание связи дверей внутриклассовый
     def create_link_door(self):
@@ -535,14 +532,14 @@ class Room:
                     for r2 in rl(rooms,r):
                         if r2<=r:
                             continue
-                        if rooms[r2].freedoor>0:
-                            self.rooms[r2],_ = rooms[r].create_link_room(rooms[r2])
-                            self.maps = self.rooms[r2].maps
+                        if rooms[r2].freedoor>0 and  not (rooms[r].ids in rooms[r2].links):
+                            self.rooms[r2],_ = rooms[r].create_link_room(rooms[r2])# тут косяк
+                            self.maps = rooms[r2].maps
             #self.rooms = rooms
 
     # создание тунеля в главной комнате
     def create_tunel(self):
-        self.create_link_door()
+        self.create_link_door() 
         maps = self
         maps.path = []
         maps.tunnelid +=1
@@ -587,12 +584,7 @@ class Room:
         
         self.rooms.append(cp.deepcopy(room))
 
-        self.create_tunel()
-
-
-        
-            
-
+        self.create_tunel() #self
 
 def create_path(p1,p2,maps): # p1,p2 = [x,y]
     x,y = p1
@@ -622,63 +614,8 @@ def main():
     # создание комнаты внутри
     maps.create_room_inside(4,4,0,0)
     maps.create_room_inside(4,4,16,16)
-    
-    '''
-    room,room2 = Room(),Room()
-    
-    room.maps = maps.maps
-    room2.maps = maps.maps
-    
-    #room.create_random_room(1)
-    room.create_room(1,4,4,0,0)
-    room2.create_room(2,4,4,16,16)
-
-    
-    if room.room != None: # если комната создалась
-        room.create_random_door()
-        room2.create_random_door()
-
-    
-    rooms = [room,room2]
-
-    
-    for r in rl(rooms):
-        if rooms[r].freedoor>0:
-            for r2 in rl(rooms,r):
-                if r2<=r:
-                    continue
-                if rooms[r2].freedoor>0:
-                    rooms[r2],_ = rooms[r].create_link_room(rooms[r2])
-    
-    
-    # первый тунель
-    maps.path = []
-    maps.tunnelid +=1
-    maps.tunnelids.append( maps.tunnelid)
-    maps.diversiontunnels[maps.tunnelid] = random.randint(0,3) # 0 - все направления 1 - нет направления 2-3 - направления
-    for r in rooms:
-        for d in r.linksdoor:
-            y,x = d[0], d[1]#d[1], d[0]
-            #ys,xs = [y-1,y+1],[x-1,x+1]
-            for yz in [y-1,y+1,y]:
-                for xz in [x-1,x+1,x]:
-                    if maps.maps[yz][xz] == 'p' and (yz==y or xz==x):#y x
-                        #maps.maps[yz][xz] = 't'
-                        
-                        if not(maps.tunnelid in maps.tunnelsxy):
-                            maps.tunnelsxy[maps.tunnelid] = []
-                        maps.tunnelsxy[maps.tunnelid].append([xz,yz])
-                        maps.path.append([xz,yz])
-    
-    #maps.maps = create_path(maps.path[0],maps.path[1],maps.maps)
-
-   
-    tunels =maps.get_min_paths(maps.path[0][::-1],maps.path[1][::-1],maps.maps)
-    tunel = tunels[ri(0,len(tunels)-1)]
-    maps.tunelpath.append(tunel)
-    for y,x in tunel:
-        maps.maps[y][x] = 't'
-    ##'''
+    #maps.create_room_inside(4,4,8,8)     
+    #maps.create_room_inside(4,4,8,4)   
 
     maps.print_map('p')
 
