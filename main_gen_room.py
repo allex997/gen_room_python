@@ -17,22 +17,15 @@ import random
 from collections import deque,defaultdict
 from re import findall as f
 import copy as cp
+from setting import * # константы
 
 def rl(arr: list,b = 0):
     return range(b,len(arr))
 
 ri = random.randint
 
-#максимальный размер карты 
-maxw = 29
-maxh = 30
-minrw = 1 #  минимальное растояние между блоками
-minrh = 1
-minwb = 3 # минимальный размер комнаты
-minhb = 3
-maxwb = 22 # максимальный размер комнаты
-maxhb = 14
-mindoor = 1 # минимальное количество дверей
+
+
 
 # Класс направленного графа, использует представление списка смежности   
 class Graph:
@@ -622,63 +615,7 @@ def main():
     # создание комнаты внутри
     maps.create_room_inside(4,4,0,0)
     maps.create_room_inside(4,4,16,16)
-    
-    '''
-    room,room2 = Room(),Room()
-    
-    room.maps = maps.maps
-    room2.maps = maps.maps
-    
-    #room.create_random_room(1)
-    room.create_room(1,4,4,0,0)
-    room2.create_room(2,4,4,16,16)
-
-    
-    if room.room != None: # если комната создалась
-        room.create_random_door()
-        room2.create_random_door()
-
-    
-    rooms = [room,room2]
-
-    
-    for r in rl(rooms):
-        if rooms[r].freedoor>0:
-            for r2 in rl(rooms,r):
-                if r2<=r:
-                    continue
-                if rooms[r2].freedoor>0:
-                    rooms[r2],_ = rooms[r].create_link_room(rooms[r2])
-    
-    
-    # первый тунель
-    maps.path = []
-    maps.tunnelid +=1
-    maps.tunnelids.append( maps.tunnelid)
-    maps.diversiontunnels[maps.tunnelid] = random.randint(0,3) # 0 - все направления 1 - нет направления 2-3 - направления
-    for r in rooms:
-        for d in r.linksdoor:
-            y,x = d[0], d[1]#d[1], d[0]
-            #ys,xs = [y-1,y+1],[x-1,x+1]
-            for yz in [y-1,y+1,y]:
-                for xz in [x-1,x+1,x]:
-                    if maps.maps[yz][xz] == 'p' and (yz==y or xz==x):#y x
-                        #maps.maps[yz][xz] = 't'
-                        
-                        if not(maps.tunnelid in maps.tunnelsxy):
-                            maps.tunnelsxy[maps.tunnelid] = []
-                        maps.tunnelsxy[maps.tunnelid].append([xz,yz])
-                        maps.path.append([xz,yz])
-    
-    #maps.maps = create_path(maps.path[0],maps.path[1],maps.maps)
-
-   
-    tunels =maps.get_min_paths(maps.path[0][::-1],maps.path[1][::-1],maps.maps)
-    tunel = tunels[ri(0,len(tunels)-1)]
-    maps.tunelpath.append(tunel)
-    for y,x in tunel:
-        maps.maps[y][x] = 't'
-    ##'''
+    maps.create_room_inside(4,4,8,8)
 
     maps.print_map('p')
 
