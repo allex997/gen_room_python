@@ -19,7 +19,7 @@ import random
 from collections import deque, defaultdict
 from re import findall as f
 import copy as cp
-
+from setting import *
 
 def rl(arr: list, b=0):
     return range(b, len(arr))
@@ -27,16 +27,6 @@ def rl(arr: list, b=0):
 
 ri = random.randint
 
-# максимальный размер карты
-maxw = 29
-maxh = 30
-minrw = 1  # минимальное растояние между блоками
-minrh = 1
-minwb = 3  # минимальный размер комнаты
-minhb = 3
-maxwb = 22  # максимальный размер комнаты
-maxhb = 14
-mindoor = 1  # минимальное количество дверей
 
 
 # Класс направленного графа, использует представление списка смежности
@@ -444,35 +434,43 @@ class Room:
                             v2.append([x1, y1])
 
         maxwelldoor -= sum([1 for i in [g1, g2, v1, v2] if len(i) < 1])
-        # print(maxwelldoor)
+        
+        ### --- FiX ---
         doorxy = []
         while len(doorxy) < 1:
             count_doors = random.randint(
                 mindoor, maxwelldoor) if maxwelldoor >= mindoor else 0
-
+            print(f'count_doors {count_doors} self.ids {self.ids}') #FiXME count_doors 1 self.ids 3 
             wells2 = [g1, g2, v1, v2]
             wells = []
-            for r in range(count_doors):
+            for r in range(count_doors-1):
                 i = random.randint(0, len(wells2)-1)
                 el = wells2[i]  # random.choice(wells2)
-                wells.append(el)
+                wells.append(el)#FIXME !=wells
+                print(f'wells {wells} self.ids {self.ids}')
                 wells2.remove(el)
+        ### --- FiX ---
 
             doorxy = []
             for w in wells:
+                #print(f'len(w) {len(wells)}   self.ids {self.ids}')
                 if len(w) > 0:
-                    i = random.randint(0, len(w)-1)
-                    xd, yd = w[i]  # random.choice(w)
-                    maps[yd][xd] = 'd'
-                    doorxy.append([xd, yd])
+                    i = random.randint(0, len(w)-1)#-1
+                    yd,xd  = w[i]  # random.choice(w)
+                    ##print(f'w[i] {w[i]}   self.ids {self.ids}')
+                    maps[xd][yd] = 'd'
+                    doorxy.append([yd,xd])
+                    #print(f'doorxy {doorxy}   self.ids {self.ids}')
 
         maxwelldoor = len(doorxy)
         # баг комната может быть без дверей вроде решил
         self.doorxy, self.countdoor = doorxy, maxwelldoor
         self.room, self.maps = room, maps
-        self.freedoor, self.freedoorxy = maxwelldoor, cp.copy(doorxy)
 
-    # связываем комнаты # тут косяк
+        self.freedoor, self.freedoorxy = maxwelldoor, cp.copy(doorxy)
+        #print(f'self.freedoorxy {self.freedoorxy}   self.ids {self.ids}')
+
+    # связываем комнаты
     def create_link_room(self, room, mainroom):
         #room2 = [cp.deepcopy(room) for room in mainroom.rooms if room.ids == self.ids][0]
         # room = cp.copy(room2) doorxy links freedoor
@@ -496,18 +494,29 @@ class Room:
                     else:
                         mindist2 = abs(dx+dy)
                         mindist = [dx, dy]
-                        mind = [room1.freedoorxy[sxy], room.freedoorxy[rxy]]
+                        mind = [room1.freedoorxy[sxy], room.freedoorxy[rxy]] # room.freedoorxy[rxy] неправильная 2 раз
 
             # удалить координаты дверей неправильно работает
             # отрисовать их y x
             # print(mind[0][0])
             # удаляем из свободной двери
+            
             self.freedoorxy.remove(mind[0])
             room.freedoorxy.remove(mind[1])
 
-            # добавляем координаты дверей
+            #print(f'self freedoorxy{self.freedoorxy} room freedoorxy {room.freedoorxy}')
+            #FM
+            #self.freedoorxy.remove(mind[1])
+            #room.freedoorxy.remove(mind[0])
+
+            #print(f'self mind[0]{mind[0]} room mind[1]{mind[1]}')
+
+            # добавляем координаты дверей FIXME
             self.linksdoor.append(mind[1])
             room.linksdoor.append(mind[0])
+            #FM
+            room.linksdoor.append(mind[1])
+            self.linksdoor.append(mind[0])###
 
             # self.maps[mind[0][0]][mind[0][1]] = 'v' # test
             #self.maps[mind[1][0]][mind[1][1]] = 'v'
@@ -586,7 +595,8 @@ class Room:
 
     # создание тунеля в главной комнате
     def create_tunel(self, mainroom):
-        b = self.create_link_door(mainroom)  # тут ошибка
+        #FIXME 
+        b = self.create_link_door(mainroom)  # тут ошибка 
         maps = mainroom
         if b:
             maps.path = []
@@ -608,7 +618,7 @@ class Room:
                                     maps.tunnelsxy[maps.tunnelid] = []
                                 maps.tunnelsxy[maps.tunnelid].append([xz, yz])
                                 maps.path.append([xz, yz])
-
+                r.linksdoor = [] #FM
             if len(maps.path) > 1:
                 cd = cp.deepcopy
                 # ошибка
@@ -631,21 +641,20 @@ class Room:
         room.maps = self.maps
         self.numberlastroom += 1  # счётчик комнат
         # None in [width,height,posx,posy]
-        if width == None or height == None or posx == None or posy == None:
+        if None in [width,height,posx,posy]:#width == None or height == None or posx == None or posy == None:
             room.create_room(self.numberlastroom)
         else:
             room.create_room(self.numberlastroom, width, height, posx, posy)
 
         if room.room != None:  # если комната создалась
             room.create_random_door(self)  # делаем двери
-
         # добавляем комнату в массив комнат
         self.rooms.append(cp.deepcopy(room))
 
 #        self.create_tunel(self)  # self room.create_tunel()
         room.create_tunel(self)  # создаём тунель
 
-
+#ненужная функция
 def create_path(p1, p2, maps):  # p1,p2 = [x,y]
     x, y = p1
     x2, y2 = p2
